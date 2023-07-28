@@ -1,4 +1,6 @@
-tiny file dialogs ( cross-platform C C++ ) v3.8.8 [Apr 22, 2021] zlib licence
+SPDX-License-Identifier: ZLIB
+
+tiny file dialogs ( cross-platform C C++ ) v3.13.3 [Jul 2, 2023]
  _________
 /         \   Tray-popup InputBox PasswordBox MessageBox Notification Beep
 |tiny file|   ColorPicker OpenFileDialog SaveFileDialog SelectFolderDialog
@@ -12,7 +14,8 @@ on Windows Mac Linux Bsd Solaris Minix Raspbian Flatpak
 using Gnome Kde Mate Enlightenment Cinnamon Budgie Unity Lxde Lxqt Xfce
       WindowMaker IceWm Cde Jds OpenBox Awesome Jwm Xdm Cwm
 
-Bindings for LUA and C# dll, Haskell, Fortran. Included in LWJGL(java), Rust, Allegrobasic
+Bindings for LUA, C#, dll, Fortran, Pascal.
+Included in LWJGL(java), Rust, Haskell, Allegrobasic.
 
                    http://tinyfiledialogs.sourceforge.net
          git clone http://git.code.sf.net/p/tinyfiledialogs/code tinyfd
@@ -24,6 +27,11 @@ Bindings for LUA and C# dll, Haskell, Fortran. Included in LWJGL(java), Rust, Al
 | | |____________________________________________________________________| | |
 | |________________________________________________________________________| |
 |____________________________________________________________________________|
+         ___________________________________________________________
+        |                                                           |
+        | v3.10: NEW FORTRAN module fully implemented with examples |
+        | v3.13: NEW PASCAL unit fully implemented with examples    |
+        |___________________________________________________________|
      _____________________________________________________________________
     |                                                                     |
     | my email address is at the top of the header file tinyfiledialogs.h |
@@ -31,11 +39,12 @@ Bindings for LUA and C# dll, Haskell, Fortran. Included in LWJGL(java), Rust, Al
  ________________________________________________________________________________
 |  ____________________________________________________________________________  |
 | |                                                                            | |
+| |  - in tinyfiledialogs, char is UTF-8 by default (since v3.6)               | |
+| |                                                                            | |
 | | on windows:                                                                | |
 | |  - for UTF-16, use the wchar_t functions at the bottom of the header file  | |
 | |  - _wfopen() requires wchar_t                                              | |
 | |                                                                            | |
-| |  - in tinyfiledialogs, char is UTF-8 by default (since v3.6)               | |
 | |  - but fopen() expects MBCS (not UTF-8)                                    | |
 | |  - if you want char to be MBCS: set tinyfd_winUtf8 = 0                     | |
 | |                                                                            | |
@@ -43,6 +52,14 @@ Bindings for LUA and C# dll, Haskell, Fortran. Included in LWJGL(java), Rust, Al
 | |                        functions to convert between UTF-8, UTF-16 and MBCS | |
 | |____________________________________________________________________________| |
 |________________________________________________________________________________|
+ ___________________________________________________________________________________
+|  _______________________________________________________________________________  |
+| |                                                                               | |
+| | wchar_t UTF-16 (windows only) prototypes are at the bottom of the header file | |
+| |_______________________________________________________________________________| |
+|___________________________________________________________________________________|
+
+See compilation instructions at the end of this file
 
 void tinyfd_beep();
 
@@ -158,6 +175,8 @@ $ clang -o hello.app hello.c tinyfiledialogs.c
 UNIX :
 $ gcc -o hello hello.c tinyfiledialogs.c
 ( or clang tcc owcc cc CC )
+( usefull warnings: -g3 -Wall -Wextra -Wdouble-promotion -Wconversion -Wno-sign-conversion
+-Wno-unused-parameter -Wno-unused-function -fsanitize=undefined -fsanitize=thread )
 
 Windows :
   MinGW needs gcc >= v4.9 otherwise some headers are incomplete

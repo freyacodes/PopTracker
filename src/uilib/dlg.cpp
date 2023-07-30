@@ -5,7 +5,7 @@
 #include <assert.h>
 #else
 #include <tinyfiledialogs.h>
-#include <tinyfiledialogs.cpp>
+#include <tinyfiledialogs.cpp> // version 3.13.3 +3 // bump this when updating to force rebuild
 #endif
 
 

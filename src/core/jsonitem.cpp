@@ -47,29 +47,16 @@ JsonItem JsonItem::FromJSON(json& j)
     
     item._name          = to_string(j["name"], "");
     item._type          = Str2Type(to_string(j["type"], ""));
-    
-    if (item._type == Type::STATIC) {
-        item._allowDisabled = false;
-        item._stage1 = 1;
-    } else /*if (item._type == Type::TOGGLE)*/ {
-        item._allowDisabled = true; // default to true
-    }
-    
+
     item._capturable    = to_bool(j["capturable"], false);
     item._loop          = to_bool(j["loop"], false);
-    item._allowDisabled = to_bool(j["allow_disabled"], item._allowDisabled);
+    item._allowDisabled = to_bool(j["allow_disabled"], true);
     item._img           = to_string(j["img"], "");
     item._disabledImg   = to_string(j["disabled_img"], item._img);
     item._minCount      = to_int(j["min_quantity"], 0);
     item._maxCount      = to_int(j["max_quantity"], -1);
     item._increment     = to_int(j["increment"], 1);
     item._decrement     = to_int(j["decrement"], item._increment);
-
-    if (item._type == Type::PROGRESSIVE_TOGGLE) {
-        item._loop = true;
-        item._allowDisabled = true;
-    }
-
     item._overlayBackground = to_string(j["overlay_background"], "");
     item._overlayAlign = to_string(j["overlay_align"], "");
     item._overlayFontSize = to_int(j["overlay_font_size"], to_int(j["badge_font_size"], 0));
@@ -82,6 +69,16 @@ JsonItem JsonItem::FromJSON(json& j)
     else
         defaultDisabledImgMods += ",@disabled";
     commasplit(to_string(j["disabled_img_mods"], defaultDisabledImgMods), item._disabledImgMods);
+
+    if (item._type == Type::TOGGLE || item._type == Type::TOGGLE_BADGED) {
+        item._allowDisabled = true; // always true
+    } else if (item._type == Type::PROGRESSIVE_TOGGLE) {
+        item._loop = true;
+        item._allowDisabled = true;
+    } else if (item._type == Type::STATIC) {
+        item._allowDisabled = false; // always false
+        item._stage1 = 1;
+    }
 
     if (j["stages"].type() == json::value_t::array) {
         for (auto& v: j["stages"]) {
@@ -168,12 +165,14 @@ bool JsonItem::_changeStateImpl(BaseItem::Action action) {
     if (_type == Type::TOGGLE) {
         // left,fwd = on, right,back = off, middle = toggle
         if (action == Action::Primary || action == Action::Next) {
-            if (_stage1 > 0) return false;
+            if (_stage1 > 0)
+                return false;
             _stage1 = 1;
         } else if (action == Action::Secondary || action == Action::Prev) {
-            if (_stage1 < 1) return false;
+            if (_stage1 < 1 || !_allowDisabled)
+                return false;
             _stage1 = 0;
-        } else { // middle mouse = toggle
+        } else if (_allowDisabled) { // middle mouse = toggle
             _stage1 = !_stage1;
         }
     } else if (_type == Type::PROGRESSIVE && !_allowDisabled) {
@@ -309,7 +308,7 @@ bool JsonItem::_changeStateImpl(BaseItem::Action action) {
         _stage2 = (int)n;
     } else if (_type == Type::TOGGLE_BADGED) {
         // only handle right-click here
-        if (action == Action::Secondary)
+        if (action == Action::Secondary && _allowDisabled)
             _stage1 = !_stage1;
         else
             return false;
@@ -326,7 +325,7 @@ int JsonItem::Lua_Index(lua_State *L, const char* key) {
         lua_pushinteger(L, _count);
         return 1;
     } else if (strcmp(key, "Active")==0) {
-        if (_type == Type::PROGRESSIVE && !_allowDisabled)
+        if (!_allowDisabled)
             lua_pushboolean(L, 1);  // always Active
         lua_pushboolean(L, _stage1);
         return 1;
@@ -397,7 +396,7 @@ bool JsonItem::Lua_NewIndex(lua_State *L, const char *key) {
         bool val = lua_isinteger(L, -1) ? (lua_tointeger(L, -1)>0) : (bool)lua_toboolean(L, -1);
         if (_type == Type::PROGRESSIVE && _allowDisabled && !val)
             _stage2 = 0;
-        else if (_type == Type::PROGRESSIVE && !_allowDisabled)
+        else if (!_allowDisabled)
             val = true;  // always Active
         if (_stage1 != val) {
             _stage1 = val;
